@@ -1,9 +1,20 @@
 #include <Arduino.h>
+#include <ESP32Servo360.h>
+
+ESP32Servo360 servo;
+
 
 void setup() {
-  // put your setup code here, to run once:
+  servo.attach(4, 16); // Control pin (white), signal pin (yellow).
+  servo.setSpeed(140); // Set turns per minute (RPM), 140 max.
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+    // servo.spin(); // Turn at set speed clockwise.
+    // delay(2000);
+    servo.spin(1); // Turn at 40 RPM anticlockwise.
+    delay(2000);
 }
+
+
+
