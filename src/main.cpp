@@ -1,10 +1,30 @@
 #include <Arduino.h>
 #include <ESP32Servo360.h>
+#include <wire.h>
 
 ESP32Servo360 servo;
 
+#define I2C_SDA 23
+#define I2C_SCL 22
+uint8_t compass = 0;
+
+
+int readCompass(void) {
+  Wire.beginTransmission(0x60);
+  Wire.write(0x01);
+  Wire.endTransmission();
+  Wire.requestFrom(0x60, 1);
+  while (Wire.available() < 1) {
+    delay(1);
+  }
+  return Wire.read();
+}
+
 
 void setup() {
+  Wire.begin(I2C_SDA, I2C_SCL);
+  Serial.begin(115200);
+ 
   servo.attach(4, 16); // Control pin (white), signal pin (yellow).
   servo.setSpeed(140); // Set turns per minute (RPM), 140 max.
 }
@@ -13,7 +33,12 @@ void loop() {
     // servo.spin(); // Turn at set speed clockwise.
     // delay(2000);
     servo.spin(1); // Turn at 40 RPM anticlockwise.
-    delay(2000);
+    
+    compass = readCompass();
+    Serial.println(compass);
+    delay(1000);
+
+
 }
 
 
