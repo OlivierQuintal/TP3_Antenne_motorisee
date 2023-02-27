@@ -6,9 +6,10 @@ ESP32Servo360 servo;
 
 #define I2C_SDA 23
 #define I2C_SCL 22
+#define angle 100
 uint8_t compass = 0;
 
-int vitesse = 1; // entre 0 et 255 
+int vitesse = 0; // entre 0 et 255 
 
 
 
@@ -27,71 +28,55 @@ int readCompass(void) {
 void setup() {
   Wire.begin(I2C_SDA, I2C_SCL);
   Serial.begin(115200);
- 
+  delay(500);
   servo.attach(4, 16); // Control pin (white), signal pin (yellow).
+  delay(1000);
   //servo.setSpeed(140); // Set turns per minute (RPM), 140 max.
 }
 
 void loop() {
 
-  /*
-    while (1) {
-      for (int i = 0; i < 20; i++) {
-        float duty = 140 * sin (i/20 * 2 * PI);
-        servo.spin(duty);
-        delay(1000);
-        Serial.println(duty);
-       }
+
+
+
+    compass = readCompass();
+
+    while(compass > angle +3 || compass < angle -3){
+
+      servo.attach(4, 16);
+      while (compass < angle -3)
+      {
+        vitesse = 10;
+        servo.spin(vitesse); // Turn at 40 RPM anticlockwise.
+        compass = readCompass();
+      }
+      while (compass > angle +3)
+      {
+        vitesse = -10;
+        servo.spin(vitesse); // Turn at 40 RPM anticlockwise.
+        compass = readCompass();
+      }
+      
+      compass = readCompass();
+
+
+
     }
-  */   
+
+    servo.detach();
+    //delay(1000);
+      
 
     // servo.spin(); // Turn at set speed clockwise.
     // delay(2000);
-    if (vitesse != 0 )
-    {
-      //servo.attach(4, 16);
-      servo.spin(vitesse); // Turn at 40 RPM anticlockwise.
-    }else{
-      //servo.detach();
-
-    }
     
     
-    compass = readCompass();
     Serial.println(compass);
-    delay(1000);
- 
+    
+
 
 
 }
-// ********* CODE À TESTER *************
 
-// // Include the library
-// #include <Servo.h>
-
-// // Create the servo object
-// Servo myservo;
-
-// // Setup section to run once
-// void setup() {
-//   myservo.attach(9); // attach the servo to our servo object
-
-//   myservo.write(90); 
-// }
-
-// // Loop to keep the motor turning!
-// void loop() {
-//   myservo.write(45); // rotate the motor counterclockwise
-
-//   delay(5000); // keep rotating for 5 seconds (5000 milliseconds)
-
-//   myservo.write(90); // stop the motor
-
-//   delay(5000); // stay stopped
-
-//   myservo.write(135); // rotate the motor clockwise
-
-//   delay(5000); // keep rotating :D
-// }
 
 
