@@ -1,38 +1,52 @@
+//******************************************************************************************************************
+//  Nom du fichier : TP3 antenne motorisee
+//  Description    : Ce programme permet de faire tourner une antenne motorisee en fonction de la valeur de la boussole
+//  Auteur         : Albert State et Olivier Quintal
+//  Date           : 1 mars 2023
+//******************************************************************************************************************
+
 #include <Arduino.h>
-#include <ESP32Servo360.h>
 #include <wire.h>
 
-ESP32Servo360 servo;
 
-#define I2C_SDA 23
-#define I2C_SCL 22
-#define angle 100     // angle de la boussole voulue (entre 0 et 255)
+#define I2C_SDA 23  // SDA pin pour la boussole
+#define I2C_SCL 22  // SCL pin pour la boussole
 
+float angleVoulue = 100 ; // angle entre 0 et 360 deg 
 
-float angleVoulue = 250 ; // angle entre 0 et 360 deg 
+uint8_t compass = 0;  // valeur de la boussole lu (valeur entre 0 et 255)
 
-uint8_t compass = 0;  // valeur de la boussole lu 
-
-int vitesse = 0; // entre 0 et 255 
-int attends = 0; // temps d'attente en ms
+int vitesse = 0;    // determine la vitesse du moteur
+float tempsBas = 0; // temps bas de notre signal PWM pour le servo moteur 
 const int moteur = 4; // pin du moteur
 
 float erreur = 0;   // erreur en degré entre la position voulue et la position actuelle
 
-
+//**********************************************************************************************************************
+// fonction qui permet de calculer la vitesse du moteur en fonction de l'erreur
+//**********************************************************************************************************************
 void vitesses(float erreur){
-  
-  float sortieTemps = ((erreur * 0.00111) + 1.5);
 
   digitalWrite(moteur, HIGH);
-  delay(sortieTemps);
+  
+  float sortieTemps = ((erreur * 0.0011111) + 1.5);
 
-  float tempsBas = 20 - sortieTemps;
+  
+  delayMicroseconds(sortieTemps*1000);
+
+
+
   digitalWrite(moteur, LOW);
-  delay(tempsBas);
+  tempsBas = 20 - sortieTemps;
+  
+  delayMicroseconds(tempsBas*1000);
   
 }
 
+
+//**********************************************************************************************************************
+// fonction qui permet de lire la valeur de la boussole
+//**********************************************************************************************************************
 int readCompass(void) {
   Wire.beginTransmission(0x60);
   Wire.write(0x01);
@@ -44,71 +58,31 @@ int readCompass(void) {
   return Wire.read();
 }
 
-
+//**********************************************************************************************************************
+// fonction qui permet de convertir la valeur de la boussole en degré
+//**********************************************************************************************************************
 float positionEnDegre(int compass){
   float angleEnDegre = compass * 360.0 / 255.0;
- // Serial.println(angleEnDegre);
+  // Serial.print("angle en degré : ");
+  // Serial.println(angleEnDegre);
   return angleEnDegre;
 }
 
 
-float rotation = 1.5 ;
 void setup() {
-  pinMode(moteur, OUTPUT);
+  pinMode(moteur, OUTPUT);        // met la pni du moteur en sortie
   Wire.begin(I2C_SDA, I2C_SCL);
   Serial.begin(115200);
   delay(1000);
 }
 
 void loop() {
-  compass = readCompass();
-  erreur = angle - positionEnDegre(compass);
-  Serial.print("erreur : ");
-  Serial.println(erreur);
+  compass = readCompass();    // valeur entre 0 et 255
+  erreur = positionEnDegre(compass) - angleVoulue;    // valeur de l'erreur en degré 
+  //Serial.print("erreur : ");
+  //Serial.println(erreur);
 
-  vitesses(erreur);
-
-
-  // for (int i = 0; i < 1000; i++)
-  // {
-  //   rotation = rotation - 0.01;
-  //   Serial.println(rotation);
-  //   servo.spin(rotation);
-  //   delay(100);
-  // }
-  // servo.spin(vitesse);
-    // compass = readCompass();
-    // float erreur = angle - compass;
-    // Serial.print("erreur : ");
-    // Serial.println(erreur);
-
-    // positionEnDegre(compass);
-
-    // while(erreur > 3 || erreur < -3){
-
-    //   servo.attach(4, 16);
-    //   while (erreur < -3)
-    //   {
-    //     vitesse = 10;     // clockwise 
-    //     servo.spin(vitesse); 
-    //     compass = readCompass();
-    //     erreur = compass - angle;
-    //     //Serial.println(erreur);
-    //   }
-    //   while (erreur > 3)
-    //   {
-    //     vitesse = -1;     // conter clockwise
-    //     servo.spin(vitesse); 
-    //     compass = readCompass();
-    //     erreur = compass - angle;
-    //    // Serial.println(erreur);
-    //   }
-      
-    //   //compass = readCompass();
-
-    // }
-    // servo.detach();  
-    // //Serial.println(compass);
+  vitesses(erreur);     // fait le pwm pour le moteur 
 }
 
 
